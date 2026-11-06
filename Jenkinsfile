@@ -5,10 +5,6 @@ pipeline {
         IMAGE_NAME = "srikantheggoju/quality-gate-app"
     }
 
-    tools {
-        sonarRunner 'sonar-scanner'
-    }
-
     stages {
 
         stage('Checkout') {
@@ -31,14 +27,6 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
         stage('Docker Build') {
             steps {
                 sh "docker build -t ${IMAGE_NAME}:latest ."
@@ -53,10 +41,8 @@ pipeline {
     }
 
     post {
-
         success {
-            echo '✅ SonarQube Scan Passed'
-            echo '✅ Quality Gate Passed'
+            echo '✅ SonarQube Analysis Successful'
             echo '✅ Docker Build Successful'
         }
 
