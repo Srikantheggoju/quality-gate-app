@@ -5,6 +5,10 @@ pipeline {
         IMAGE_NAME = "srikantheggoju/quality-gate-app"
     }
 
+    tools {
+        sonarRunner 'sonar-scanner'
+    }
+
     stages {
 
         stage('Checkout') {
@@ -13,9 +17,25 @@ pipeline {
             }
         }
 
-        stage('SonarQube Check') {
+        stage('SonarQube Analysis') {
             steps {
-                echo 'SonarQube server configured'
+                withSonarQubeEnv('sonarqube') {
+                    sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=quality-gate-app \
+                        -Dsonar.projectName=quality-gate-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.python.version=3.11
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
@@ -35,11 +55,13 @@ pipeline {
     post {
 
         success {
-            echo 'Pipeline Completed Successfully'
+            echo '✅ SonarQube Scan Passed'
+            echo '✅ Quality Gate Passed'
+            echo '✅ Docker Build Successful'
         }
 
         failure {
-            echo 'Pipeline Failed'
+            echo '❌ Pipeline Failed'
         }
 
         always {
