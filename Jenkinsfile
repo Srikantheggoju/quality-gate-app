@@ -15,14 +15,26 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=quality-gate-app \
-                        -Dsonar.projectName=quality-gate-app \
-                        -Dsonar.sources=. \
-                        -Dsonar.python.version=3.11
-                    '''
+                script {
+                    def scannerHome = tool('sonar-scanner')
+
+                    withSonarQubeEnv('sonarqube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=quality-gate-app \
+                            -Dsonar.projectName=quality-gate-app \
+                            -Dsonar.sources=. \
+                            -Dsonar.python.version=3.11
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -41,8 +53,10 @@ pipeline {
     }
 
     post {
+
         success {
-            echo '✅ SonarQube Analysis Successful'
+            echo '✅ SonarQube Scan Passed'
+            echo '✅ Quality Gate Passed'
             echo '✅ Docker Build Successful'
         }
 
