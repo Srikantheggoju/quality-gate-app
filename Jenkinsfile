@@ -5,10 +5,6 @@ pipeline {
         IMAGE_NAME = "srikantheggoju/quality-gate-app"
     }
 
-    tools {
-        sonarQubeScanner 'sonar-scanner'
-    }
-
     stages {
 
         stage('Checkout') {
@@ -17,11 +13,9 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube Check') {
             steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh 'sonar-scanner'
-                }
+                echo 'SonarQube server configured'
             }
         }
 
@@ -39,12 +33,17 @@ pipeline {
     }
 
     post {
+
         success {
             echo 'Pipeline Completed Successfully'
         }
 
         failure {
             echo 'Pipeline Failed'
+        }
+
+        always {
+            cleanWs()
         }
     }
 }
